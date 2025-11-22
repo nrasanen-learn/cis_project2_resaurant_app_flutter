@@ -104,6 +104,19 @@ class _RestaurantAppState extends State<RestaurantApp> {
           children: [
             // ====== Restaurant Input  ======
             EnterNewRestaurantWidget(),
+
+            /*const SizedBox(height: 24),
+            Expanded(
+              child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Price"))
+            ),
+            Expanded(
+                child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Restaurant Name"))
+            ),
+            Expanded(
+                child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Rating"))
+            ),
+             */
+
             // ====== Spacer for formating ======
             const SizedBox(height: 24),
             Expanded(
@@ -206,5 +219,9 @@ class _RestaurantAppState extends State<RestaurantApp> {
       ),
     );
   }
+
+  //Widget PriceSort(List restaurants) {
+  //  restaurants.sort(_RestaurantPrice);
+  //}
 
 }
