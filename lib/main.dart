@@ -33,6 +33,19 @@ class RestaurantApp extends StatefulWidget {
 }
 
 class _RestaurantAppState extends State<RestaurantApp> {
+  String _sortField = 'createdAt'; // default sort
+  bool get _isDescending {   //_isDescending taken from ai
+    switch (_sortField) {
+      case 'price':
+      case 'rating':
+        return true;  // sort high → low
+      case 'restaurant':
+      case 'createdAt':
+      default:
+        return false; // sort low → high
+    }
+  }
+
   // Controller for the input field
   final TextEditingController _RestaurantName = TextEditingController();
   final TextEditingController _RestaurantType = TextEditingController();
@@ -41,6 +54,23 @@ class _RestaurantAppState extends State<RestaurantApp> {
   final TextEditingController _RestaurantRating = TextEditingController();
   final TextEditingController _RestaurantPrice = TextEditingController();
   // final TextEditingController _RestaurantImage = TextEditingController();
+
+  Widget SortSelector() {
+    return DropdownButton<String>(
+      value: _sortField,
+      items: const [
+        DropdownMenuItem(value: 'price', child: Text("Sort by Price")),
+        DropdownMenuItem(value: 'restaurant', child: Text("Sort by Name")),
+        DropdownMenuItem(value: 'rating', child: Text("Sort by Rating")),
+        DropdownMenuItem(value: 'createdAt', child: Text("Newest First")),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          setState(() => _sortField = value);
+        }
+      },
+    );
+  }
 
 
   // Local list of restaurants (Phase 1: local; Phase 2: Firestore stream replaces this).
@@ -52,7 +82,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     restaurants = FirebaseFirestore.instance.collection('RESTAURANTS');
   }
 
-  // ACTION: add one restaurant from the TextField to the local list.
+  // add one restaurant from the TextField to the local list.
   void _addRestaurant() {
     final newRestaurantName = _RestaurantName.text.trim();
     final newRestaurantType = _RestaurantType.text.trim();
@@ -71,8 +101,8 @@ class _RestaurantAppState extends State<RestaurantApp> {
             'typeOfRestaurant': newRestaurantType,
             'description': newRestaurantDescription,
             'menuItem': newRestaurantMenuItem,
-            'rating': newRestaurantRating,
-            'price': newRestaurantPrice,
+            'rating': double.tryParse(newRestaurantRating) ?? 0.0,
+            'price': double.tryParse(newRestaurantPrice) ?? 0.0,
             // 'typeOfRestaurant': newRestaurantType,
             'createdAt': FieldValue.serverTimestamp(),}
       );
@@ -117,6 +147,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
             ),
              */
 
+            SortSelector(),
             // ====== Spacer for formating ======
             const SizedBox(height: 24),
             Expanded(
@@ -131,7 +162,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
 
   StreamBuilder<QuerySnapshot<Map<String, dynamic>>> RestaurantListWidget() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: restaurants.snapshots(),
+        stream: restaurants.orderBy(_sortField, descending: _isDescending).snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snap){
           if (snap.hasError) {
             return Text('Firebase Snapshot Error: ${snap.error}');
@@ -151,8 +182,8 @@ class _RestaurantAppState extends State<RestaurantApp> {
               final String restaurantType = (doc.data()['typeOfRestaurant'] ?? 'Unknown Food Type');
               final String restaurantDescription = (doc.data()['description'] ?? 'No Description');
               final String restaurantMenuItem = (doc.data()['menuItem'] ?? 'Unnamed Dish');
-              final String restaurantRating = (doc.data()['rating'] ?? 'No Rating');
-              final String restaurantPrice = (doc.data()['price'] ?? 'Undisclosed Price');
+              final String restaurantRating = (doc.data()['rating'] != null ? doc.data()['rating'].toString() : 'No Rating');
+              final String restaurantPrice = (doc.data()['price'] != null ? doc.data()['price'].toString() : 'No Price');
               return Dismissible(
                 key: ValueKey(restaurantId),
                 // ====== Item Tile ======
