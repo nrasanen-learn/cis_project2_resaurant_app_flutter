@@ -1,9 +1,10 @@
-import 'package:cis_project2_resaurant_app/restaurant.dart';
+import 'package:cis_project2_resaurant_app/restaurant.dart'; // never used the restaurant class to create instances
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
+// main async method to initialise the application
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -31,8 +32,9 @@ class RestaurantApp extends StatefulWidget {
   @override
   State<RestaurantApp> createState() => _RestaurantAppState();
 }
-
+// the app state which will update the users screen if any changes are made to the components within this state
 class _RestaurantAppState extends State<RestaurantApp> {
+  // sorting variables and variableshow to make the different criteria for sorting ascending or descending with booleans
   String _sortField = 'createdAt'; // default sort
   bool get _isDescending {   //_isDescending taken from ai
     switch (_sortField) {
@@ -46,7 +48,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     }
   }
 
-  // Controller for the input field
+  // Controllers for the input field
   final TextEditingController _RestaurantName = TextEditingController();
   final TextEditingController _RestaurantType = TextEditingController();
   final TextEditingController _RestaurantDescription = TextEditingController();
@@ -55,6 +57,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
   final TextEditingController _RestaurantPrice = TextEditingController();
   // final TextEditingController _RestaurantImage = TextEditingController();
 
+  // sorting method that allows the user to select from a dropdown menu
   Widget SortSelector() {
     return DropdownButton<String>(
       value: _sortField,
@@ -73,7 +76,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
   }
 
 
-  // Local list of restaurants (Phase 1: local; Phase 2: Firestore stream replaces this).
+  // Local list of restaurants
   late final CollectionReference<Map<String, dynamic>> restaurants;
 
   @override
@@ -82,7 +85,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     restaurants = FirebaseFirestore.instance.collection('RESTAURANTS');
   }
 
-  // add one restaurant from the TextField to the local list.
+  // add one restaurant from the TextField to the local list including the code a few lines down.
   void _addRestaurant() {
     final newRestaurantName = _RestaurantName.text.trim();
     final newRestaurantType = _RestaurantType.text.trim();
@@ -92,6 +95,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     final newRestaurantPrice = _RestaurantPrice.text.trim();
     // final newRestaurantImage = _RestaurantName.text.trim();
 
+    // makes sure all fields are filled before adding to the database
     if (newRestaurantName.isEmpty && newRestaurantType.isEmpty && newRestaurantPrice.isEmpty
         && newRestaurantRating.isEmpty && newRestaurantMenuItem.isEmpty && newRestaurantDescription.isEmpty
         /* && newRestaurantImage.isEmpty */) return;
@@ -103,7 +107,6 @@ class _RestaurantAppState extends State<RestaurantApp> {
             'menuItem': newRestaurantMenuItem,
             'rating': double.tryParse(newRestaurantRating) ?? 0.0,
             'price': double.tryParse(newRestaurantPrice) ?? 0.0,
-            // 'typeOfRestaurant': newRestaurantType,
             'createdAt': FieldValue.serverTimestamp(),}
       );
       _RestaurantName.clear();
@@ -117,13 +120,14 @@ class _RestaurantAppState extends State<RestaurantApp> {
     });
   }
 
-  // ACTION: remove the restaurant with the given fire base id.
+  // remove the restaurant with the given fire base id. (never used/ started for future improvements)
   void _removeRestaurantAt(String id) {
     setState(() {
       restaurants.doc(id).delete(); // remove restaurant from fireStore
     });
   }
 
+  // build method which compiles all of my functions to display to the uses
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,26 +136,16 @@ class _RestaurantAppState extends State<RestaurantApp> {
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
         child: Column(
           children: [
-            // ====== Restaurant Input  ======
+            // Restaurant Input
             EnterNewRestaurantWidget(),
-
-            /*const SizedBox(height: 24),
-            Expanded(
-              child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Price"))
-            ),
-            Expanded(
-                child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Restaurant Name"))
-            ),
-            Expanded(
-                child: ElevatedButton(onPressed: /*sortingMethod*/, child: Text("Sort by Rating"))
-            ),
-             */
-
+            // Spacer for formating
+            const SizedBox(height: 24),
+            // Sorting Dropdown
             SortSelector(),
-            // ====== Spacer for formating ======
+            // Spacer for formating
             const SizedBox(height: 24),
             Expanded(
-              // ====== Restaurant List ======
+              // Restaurant List
               child: RestaurantListWidget(),
             ),
           ],
@@ -160,6 +154,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
     );
   }
 
+  // this contains my list builder which creates the list from the data of the database and it is comprised of cards and listTiles
   StreamBuilder<QuerySnapshot<Map<String, dynamic>>> RestaurantListWidget() {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: restaurants.orderBy(_sortField, descending: _isDescending).snapshots(),
@@ -186,7 +181,7 @@ class _RestaurantAppState extends State<RestaurantApp> {
               final String restaurantPrice = (doc.data()['price'] != null ? doc.data()['price'].toString() : 'No Price');
               return Dismissible(
                 key: ValueKey(restaurantId),
-                // ====== Item Tile ======
+                // A card and listTile to format the data to the user
                 child: Card(
                   color:  Color(0xFFC8A2C8),
                   shadowColor: Color(0xFF000000),
@@ -203,10 +198,12 @@ class _RestaurantAppState extends State<RestaurantApp> {
     );
   }
 
+  // this is my method that allows the user to enter in a new instance of a restaurant and add it to the list
+  // it does this by getting the TextInput method below and giving it the connected restaurant data types and labels
   Widget EnterNewRestaurantWidget() {
     return Row(
       children: [
-        // ====== Item Name TextField ======
+        // Item Name TextField
         Expanded(
           child: TextInput(_RestaurantName, "Name:")
         ),
@@ -231,12 +228,15 @@ class _RestaurantAppState extends State<RestaurantApp> {
             child: TextInput(_RestaurantPrice, "Price:")
         ),
         const SizedBox(width: 12),
-        // ====== Add Item Button ======
+        // Add Item Button
         FilledButton(onPressed: _addRestaurant, child: const Text('Add')),
       ],
     );
   }
 
+  // this gets called in EnterNewRestaurantWidget and is the individual text fields that comprise the method above
+  // it also contains the cosmetic features of the input fields
+  // this method is separated to make code more readable by not have the same code six times over
   Widget TextInput(TextEditingController restaurantAttribute, String name) {
     return TextField(
       controller: restaurantAttribute,
@@ -250,9 +250,4 @@ class _RestaurantAppState extends State<RestaurantApp> {
       ),
     );
   }
-
-  //Widget PriceSort(List restaurants) {
-  //  restaurants.sort(_RestaurantPrice);
-  //}
-
 }
